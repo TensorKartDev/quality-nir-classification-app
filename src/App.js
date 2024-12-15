@@ -322,9 +322,10 @@ const App = () => {
                       <h5>Provide Feedback</h5>
                       <textarea
                         className="form-control mb-3"
+                        placeholder={`Please comment`}
                         rows={5}
-                        value={insights[activeCluster]}
-                        readOnly
+                        value={""}
+                    
                       />
                       <button
                         className="btn btn-primary w-100"
