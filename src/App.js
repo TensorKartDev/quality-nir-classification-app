@@ -18,13 +18,24 @@ const App = () => {
   const [loadingClusters, setLoadingClusters] = useState({});
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const insightsRef = useRef(null);
-
+  // Updated Feedback State
+const [feedbacks, setFeedbacks] = useState({});
+const [ratings, setRatings] = useState({}); // State for ratings
   useEffect(() => {
     if (insightsRef.current) {
       insightsRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [insights]);
 
+  // Updated handleFeedbackChange
+const handleFeedbackChange = (cluster, feedback) => {
+  setFeedbacks((prev) => ({ ...prev, [cluster]: feedback }));
+};
+
+// New handleRatingChange
+const handleRatingChange = (cluster, rating) => {
+  setRatings((prev) => ({ ...prev, [cluster]: rating }));
+};
   const handleInputChange = (e) => setTopics(e.target.value);
 
   const handleNumRowsChange = (e) => setNumRows(parseInt(e.target.value, 10));
@@ -79,7 +90,7 @@ const App = () => {
   const handleQuestionChange = (cluster, question) => {
     setQuestions((prev) => ({ ...prev, [cluster]: question }));
   };
-
+  
   const handleGetInsights = async (cluster) => {
     const question = questions[cluster];
     if (!question || question.trim() === "") {
@@ -117,13 +128,15 @@ const App = () => {
   const handleFeedbackSubmit = async (cluster) => {
     try {
       const feedbackPayload = {
-        topic: cluster,
-        feedback: insights[cluster],
+        content: insights[cluster], // Insight content
+        rating: ratings[cluster],  // Rating provided by the user
+        comment: feedbacks[cluster].trim(), // Feedback comment
       };
-
       await addFeedback(feedbackPayload);
       showToast("Feedback submitted successfully!");
       setFeedbackVisible(false);
+      setFeedbacks((prev) => ({ ...prev, [cluster]: "" })); // Clear feedback for the cluster
+      setRatings((prev) => ({ ...prev, [cluster]: "" }));
     } catch (err) {
       showToast("Error submitting feedback. Please try again.");
     }
@@ -134,9 +147,7 @@ const App = () => {
       <div>
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
           <div className="container">
-            <Link className="navbar-brand" to="/">
-              My App
-            </Link>
+           
             <div className="collapse navbar-collapse">
               <ul className="navbar-nav">
                 <li className="nav-item">
@@ -309,38 +320,52 @@ const App = () => {
                     </div>
                   )}
 
-                  {feedbackVisible && (
-                    <div
-                      className="position-fixed bg-light shadow p-3"
-                      style={{
-                        width: "400px",
-                        right: 0,
-                        top: 0,
-                        zIndex: 1050,
-                      }}
-                    >
-                      <h5>Provide Feedback</h5>
-                      <textarea
-                        className="form-control mb-3"
-                        placeholder={`Please comment`}
-                        rows={5}
-                        value={""}
-                    
-                      />
-                      <button
-                        className="btn btn-primary w-100"
-                        onClick={() => handleFeedbackSubmit(activeCluster)}
+                    {feedbackVisible && (
+                      <div
+                        className="position-fixed bg-light shadow p-3"
+                        style={{
+                          width: "400px",
+                          right: 0,
+                          top: 0,
+                          zIndex: 1050,
+                        }}
                       >
-                        Submit Feedback
-                      </button>
-                      <button
-                        className="btn btn-secondary w-100 mt-2"
-                        onClick={() => setFeedbackVisible(false)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
+                        <h5>Provide Feedback</h5>
+                        <textarea
+                          className="form-control mb-3"
+                          placeholder="Write your feedback here..."
+                          rows={5}
+                          value={feedbacks[activeCluster] || ""}
+                          onChange={(e) => handleFeedbackChange(activeCluster, e.target.value)}
+                        />
+                        <label htmlFor="ratingSelect" className="form-label">Rating</label>
+                        <select
+                          className="form-select mb-3"
+                          id="ratingSelect"
+                          value={ratings[activeCluster] || ""}
+                          onChange={(e) => handleRatingChange(activeCluster, e.target.value)}
+                        >
+                          <option value="" disabled>Select a rating</option>
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <option key={rating} value={rating}>
+                              {rating}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="btn btn-primary w-100"
+                          onClick={() => handleFeedbackSubmit(activeCluster)}
+                        >
+                          Submit Feedback
+                        </button>
+                        <button
+                          className="btn btn-secondary w-100 mt-2"
+                          onClick={() => setFeedbackVisible(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
                 </div>
               }
             />
